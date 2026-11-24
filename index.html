@@ -87,6 +87,7 @@
     offT:'No internet connection', offM:'The app needs Internet to load and save data. Check Wi-Fi/4G and try again.',
     insAndroid:'<strong>Install the app</strong>Add it to your home screen for one-tap access.', insBtn:'Install',
     insIOS:'<strong>Install on iPhone</strong>Tap <b>Share ⬆️</b> then <b>Add to Home Screen</b>.',
+    insMenu:'<strong>Install the app</strong>Tap <b>⋮</b> (top-right of Chrome) → <b>Install app</b> or <b>Add to Home screen</b>.',
     insInApp:'<strong>Open in your browser to install</strong>Tap <b>⋯</b> and choose <b>Open in browser</b> (Safari/Chrome).',
     name:C.NAME_EN, credit:'Developed by Nguyễn Phương Thảo'
   } : {
@@ -94,6 +95,7 @@
     offT:'Không có kết nối mạng', offM:'App cần Internet để tải và lưu dữ liệu. Hãy kiểm tra Wi-Fi/4G rồi thử lại.',
     insAndroid:'<strong>Cài đặt ứng dụng</strong>Thêm vào màn hình chính để mở nhanh bằng 1 chạm.', insBtn:'Cài đặt',
     insIOS:'<strong>Cài lên iPhone</strong>Bấm <b>Chia sẻ ⬆️</b> rồi chọn <b>Thêm vào MH chính</b>.',
+    insMenu:'<strong>Cài đặt ứng dụng</strong>Bấm <b>⋮</b> (góc trên bên phải Chrome) → <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.',
     insInApp:'<strong>Mở bằng trình duyệt để cài app</strong>Bấm <b>⋯</b> và chọn <b>Mở bằng trình duyệt</b> (Safari/Chrome).',
     name:C.NAME_VI, credit:C.CREDIT
   };
@@ -135,19 +137,21 @@
 
   /* ---- Gợi ý cài đặt ---- */
   var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  var dismissed = false; try { dismissed = localStorage.getItem('hlc_install_x') === '1'; } catch(e) {}
+  var dismissed = false; try { dismissed = Date.now() - Number(localStorage.getItem('hlc_install_x2') || 0) < 3*86400000; } catch(e) {}
   var ua = navigator.userAgent || '';
   var isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   var inApp = /Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\//i.test(ua);
   var bar = $('install');
   function showBar(html, btn){ if (standalone || dismissed) return; $('insTx').innerHTML = html; $('insGo').hidden = !btn; if (btn) $('insGo').textContent = btn; bar.hidden = false; }
-  $('insX').onclick = function(){ bar.hidden = true; try { localStorage.setItem('hlc_install_x','1'); } catch(e) {} };
+  $('insX').onclick = function(){ bar.hidden = true; try { localStorage.setItem('hlc_install_x2', String(Date.now())); } catch(e) {} };
   var deferred = null;
   window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; showBar(T.insAndroid, T.insBtn); });
   $('insGo').onclick = function(){ if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function(){ bar.hidden = true; deferred = null; }); };
   window.addEventListener('appinstalled', function(){ bar.hidden = true; });
+  var isAndroid = /Android/i.test(ua);
   if (inApp) setTimeout(function(){ showBar(T.insInApp); }, 1500);
   else if (isIOS) setTimeout(function(){ showBar(T.insIOS); }, 2500);
+  else if (isAndroid) setTimeout(function(){ if (!deferred) showBar(T.insMenu); }, 8000);
 })();
 </script>
 </body>

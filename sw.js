@@ -1,6 +1,6 @@
 /* Service worker: lưu sẵn "vỏ" app để mở nhanh và báo lỗi khi mất mạng.
  * Dữ liệu thật (web app Apps Script) luôn tải trực tiếp từ Google, không bị lưu cache. */
-const CACHE = 'hlc-shell-v1';
+const CACHE = 'hlc-shell-v2';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 

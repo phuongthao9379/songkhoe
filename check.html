@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiểm tra cài đặt app</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f766e">
+<script src="config.js"></script>
+<style>
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f3f6f5;color:#1f2933}
+  header{background:#0f766e;color:#fff;padding:16px}
+  header h1{margin:0;font-size:18px}
+  main{padding:14px;max-width:640px;margin:0 auto}
+  .it{background:#fff;border:1px solid #e3e8e7;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .it b{display:block}
+  .ok{color:#15803d}.bad{color:#b42318}.warn{color:#8a5300}.mut{color:#6b7780;font-size:13px}
+  .fix{font-size:13px;margin-top:4px;background:#fff7e6;border-radius:8px;padding:6px 8px}
+  img{width:40px;height:40px;border-radius:8px;vertical-align:middle;margin-right:6px}
+  button{border:0;border-radius:999px;padding:10px 16px;background:#0f766e;color:#fff;font:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<header><h1>🔎 Kiểm tra cài đặt app</h1><div class="mut" style="color:#d6efeb">Mở trang này trên điện thoại bằng Chrome</div></header>
+<main>
+  <div id="out"></div>
+  <div class="it" id="bip"><b>⏳ Gợi ý "Cài đặt" của Chrome</b><span class="mut">Đang chờ tối đa 10 giây… (hãy chạm vào màn hình vài lần)</span></div>
+  <p class="mut">Gửi ảnh chụp màn hình trang này cho người hỗ trợ nếu còn mục ❌.</p>
+  <button onclick="location.reload()">Kiểm tra lại</button>
+</main>
+<script>
+var bipEvent=null;
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); bipEvent=e; });
+(function(){
+  var out=document.getElementById('out');
+  function row(state,title,detail,fix){
+    var icon=state==='ok'?'✅':state==='bad'?'❌':'⚠️';
+    var d=document.createElement('div'); d.className='it';
+    d.innerHTML='<b class="'+state+'">'+icon+' '+title+'</b>'+(detail?'<span class="mut">'+detail+'</span>':'')+(fix?'<div class="fix">👉 '+fix+'</div>':'');
+    out.appendChild(d);
+  }
+  var ua=navigator.userAgent;
+  var inApp=/Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\//i.test(ua);
+  var samsung=/SamsungBrowser/i.test(ua);
+  var chrome=/Chrome\/\d+/.test(ua) && !/Edg|OPR|SamsungBrowser/.test(ua);
+  var android=/Android/i.test(ua), ios=/iphone|ipad|ipod/i.test(ua);
+  var standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+
+  // 1. Trình duyệt
+  if(inApp) row('bad','Đang mở trong Zalo/Facebook','Trình duyệt trong ứng dụng không cài được app.','Bấm ⋯ → Mở bằng trình duyệt (Chrome).');
+  else if(android && chrome) row('ok','Trình duyệt: Chrome trên Android','');
+  else if(android && samsung) row('warn','Trình duyệt: Samsung Internet','Có thể cài nhưng thao tác khác Chrome.','Nên mở bằng Chrome để có nút Cài đặt.');
+  else if(ios) row('warn','iPhone/iPad','iPhone không có nút "Cài đặt" tự động.','Mở bằng Safari → Chia sẻ ⬆️ → Thêm vào MH chính.');
+  else row('warn','Trình duyệt khác','','Trên Android nên dùng Chrome.');
+  if(standalone) row('ok','App đang chạy ở chế độ đã cài đặt','');
+
+  // 2. HTTPS
+  row(location.protocol==='https:'?'ok':'bad','Kết nối HTTPS',location.origin, location.protocol==='https:'?'':'Phải mở bằng link https://…github.io/…');
+
+  // 3. config.js
+  var u=(window.APP_CONFIG||{}).APP_URL||'';
+  if(/^https:\/\/script\.google(usercontent)?\.com\/.+\/exec/.test(u)) row('ok','config.js có link web app',u.slice(0,60)+'…');
+  else row('bad','config.js chưa có link web app hợp lệ',u||'(trống)','Sửa APP_URL trong config.js thành link kết thúc bằng /exec, giữ dấu nháy đơn.');
+
+  // 4. Manifest + icons
+  fetch('manifest.webmanifest',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(m){
+    row('ok','File manifest.webmanifest','Tên app: '+m.name+' · Tên ngắn: '+m.short_name+' · display: '+m.display);
+    (m.icons||[]).forEach(function(ic){
+      fetch(ic.src,{cache:'no-store'}).then(function(r){
+        var t=r.headers.get('content-type')||'';
+        if(r.ok && /image\/png/.test(t)) row('ok','Icon '+ic.sizes+' ('+ic.purpose+')','<img src="'+ic.src+'" alt="">'+ic.src);
+        else row('bad','Icon '+ic.sizes+' không tải được',ic.src+' → HTTP '+r.status,'Thiếu thư mục icons/ hoặc file png. Upload lại thư mục icons vào gốc repo.');
+      }).catch(function(){ row('bad','Icon '+ic.sizes+' lỗi tải',ic.src,'Upload lại thư mục icons.'); });
+    });
+  }).catch(function(e){
+    row('bad','Không đọc được manifest.webmanifest',e.message,'Kiểm tra file manifest.webmanifest nằm ở gốc repo, cùng chỗ với index.html.');
+  });
+
+  // 5. Service worker
+  if(!('serviceWorker' in navigator)) row('warn','Trình duyệt không hỗ trợ service worker','');
+  else navigator.serviceWorker.register('sw.js').then(function(){ return navigator.serviceWorker.ready; })
+    .then(function(r){ row('ok','Service worker hoạt động',r.scope); })
+    .catch(function(e){ row('bad','Service worker lỗi',e.message,'Kiểm tra file sw.js nằm ở gốc repo.'); });
+
+  // 6. Đã cài trước đó?
+  if(navigator.getInstalledRelatedApps) navigator.getInstalledRelatedApps().then(function(a){ if(a&&a.length) row('warn','App có vẻ đã được cài trên máy','Chrome không hiện nút Cài đặt cho app đã cài.'); }).catch(function(){});
+
+  // 7. beforeinstallprompt
+  setTimeout(function(){
+    var el=document.getElementById('bip');
+    if(bipEvent){ el.innerHTML='<b class="ok">✅ Chrome cho phép cài đặt</b><button id="inst" style="margin-top:8px">📲 Cài đặt ngay</button>';
+      document.getElementById('inst').onclick=function(){ bipEvent.prompt(); };
+    } else if(standalone){ el.innerHTML='<b class="ok">✅ Đã cài đặt</b>'; }
+    else { el.innerHTML='<b class="warn">⚠️ Chrome chưa hiện gợi ý cài đặt</b><span class="mut">Bình thường nếu app đã cài, hoặc Chrome chưa thấy đủ tương tác.</span>'+
+      '<div class="fix">👉 Cài thủ công: bấm <b>⋮</b> (góc trên bên phải Chrome) → <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b> → <b>Cài đặt</b>.</div>'; }
+  },10000);
+})();
+</script>
+</body>
+</html>
