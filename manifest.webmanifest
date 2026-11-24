@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Thử thách Lối sống Lành mạnh",
+  "short_name": "Sống Khỏe",
+  "description": "Nhập buổi tập và theo dõi điểm Thử thách Lối sống Lành mạnh — phát triển bởi Nguyễn Phương Thảo",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f766e",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
