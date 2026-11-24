@@ -3,7 +3,7 @@
  * ========================================================= */
 window.APP_CONFIG = {
   // Dán link web app Apps Script (kết thúc bằng /exec) vào giữa 2 dấu nháy:
-  APP_URL: 'https://github.com/phuongthao9379/songkhoe.git',
+  APP_URL: 'https://script.google.com/macros/s/AKfycbz2CbcexlgpCiCIcUsaIUTXXFSC3nKwQcOL3nnJV8tsyoODqM-38zOE6LMgZSI_jPEY/exec',
 
   // Tên hiển thị trên màn hình chờ
   NAME_VI: 'Thử thách Lối sống Lành mạnh',
